@@ -20,6 +20,7 @@ class OpenStore {
   static const _appStoreUrlMacOS =
       'https://apps.apple.com/ru/app/g-app-launcher/id';
   static const _microsoftStoreUrl = 'https://apps.microsoft.com/store/detail/';
+  static const _flathubUrl = 'https://flathub.org/apps/';
 
   final _platformNotSupportedException = Exception('Platform not supported');
 
@@ -36,12 +37,13 @@ class OpenStore {
     String? appStoreId,
     String? appStoreIdMacOS,
     String? windowsProductId,
+    String? flathubPackage,
   }) async {
     assert(
       appStoreId != null ||
           androidAppBundleId != null ||
           windowsProductId != null ||
-          appStoreIdMacOS != null,
+          appStoreIdMacOS != null || flathubPackage != null,
       "You must pass one of this parameters",
     );
 
@@ -51,6 +53,7 @@ class OpenStore {
         appStoreIdMacOS,
         androidAppBundleId,
         windowsProductId,
+        flathubPackage,
       );
     } on Exception catch (e, st) {
       log([e, st].toString());
@@ -59,7 +62,7 @@ class OpenStore {
   }
 
   Future<void> _open(String? appStoreId, String? appStoreIdMacOS,
-      String? androidAppBundleId, String? windowsProductId) async {
+      String? androidAppBundleId, String? windowsProductId, String? flathubPackage) async {
     if (kIsWeb) {
       throw Exception('Platform not supported');
     }
@@ -78,6 +81,10 @@ class OpenStore {
     }
     if (Platform.isWindows) {
       await _opnWindows(windowsProductId);
+      return;
+    }
+    if (Platform.isLinux) {
+      await _opnLinux(flathubPackage);
       return;
     }
 
@@ -116,6 +123,14 @@ class OpenStore {
       return;
     }
     throw CantLaunchPageException("windowsProductId is not passed");
+  }
+  
+    Future _opnLinux(String? flathubPackage) async {
+    if (windowsProductId != null) {
+      await _openUrl('$_flathubUrl$flathubPackage');
+      return;
+    }
+    throw CantLaunchPageException("flathubPackage is not passed");
   }
 
   Future<void> _openUrl(String url) async {
